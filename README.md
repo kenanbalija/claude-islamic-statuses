@@ -1,25 +1,42 @@
 # spinner-ads
 
-A tiny, dependency-free **mock "sponsored spinner"** for the terminal. It renders
-a Claude Code status line that animates a spinner and rotates through mock ads
-while Claude works.
+An animated Claude Code status line: a spinner that animates while Claude works,
+plus a rotating **authentic hadith** shown at the bottom of the terminal.
 
-This is a toy/MVP. It does **not** earn money — there's no ad network, tracking,
-or payouts. It just demonstrates the rendering surface (see "Going real" below).
+(The project is still named `spinner-ads` from its mock-ad origins — see git
+history. It now shows hadiths instead of ads. `ads.txt` is kept as a legacy
+example and is no longer read.)
 
 ## How it works
 
 Claude Code lets you replace the bottom status line with the output of any
 command (`statusLine` in `settings.json`). It calls that command repeatedly to
-re-render — frequently while Claude is generating. `statusline.sh`:
+re-render — frequently while Claude is generating.
 
-1. Bumps a tick counter at `~/.spinner-ads/tick` on every render.
-2. Uses the tick to pick the current braille spinner frame (so it animates).
-3. Rotates to the next ad from `ads.txt` every ~20 renders.
-4. Prints one line: `⠹  ShipFast — git push... → shipfast.example  · sponsored`
+- **`statusline.sh`** is that command. It bumps a tick counter
+  (`~/.spinner-ads/tick`) each render to pick the braille spinner frame (so it
+  animates), and rotates to a different hadith every 30 seconds of wall-clock
+  time (so each one stays readable). It **never hits the network** — it only
+  reads `hadiths.txt`.
+- **`refresh-hadiths.sh`** populates `hadiths.txt` from the
+  [fawazahmed0/hadith-api](https://github.com/fawazahmed0/hadith-api) (free, no
+  API key). It pulls **Sahih al-Bukhari + Sahih Muslim** — the two *Sahihayn*,
+  authentic by scholarly consensus — keeps only short, one-line-friendly
+  hadiths, and tags each with its collection + number so it's verifiable.
 
-No external dependencies — just bash, `grep`, and `printf` (works with the
-bash 3.2 that ships on macOS).
+No external dependencies beyond `bash`, `curl`, `python3`, and `grep` — all
+present on a stock macOS.
+
+### Why only Bukhari & Muslim?
+
+You asked for **confirmed** hadiths only. Rather than trust per-hadith grade
+fields (quality varies across datasets), this restricts the pool to the two
+collections whose contents are graded *sahih* by consensus. Every line is
+authentic by construction.
+
+> Note: the API edition is **English** (it has no Bosnian edition). To switch to
+> Bosnian later, point `refresh-hadiths.sh` at a Bosnian source, or drop Bosnian
+> lines straight into `hadiths.txt` (same `text  — Collection N` format).
 
 ## Enable it
 
@@ -34,30 +51,30 @@ Point your Claude Code `statusLine` at the script. In `~/.claude/settings.json`:
 }
 ```
 
-Then start (or restart) Claude Code. The ad line shows at the bottom; the
-spinner animates while Claude is working.
+(Already wired up on this machine.) Restart or start a Claude Code session; the
+hadith line shows at the bottom and the spinner animates while Claude works.
+
+## Refresh the hadith pool
+
+```bash
+./refresh-hadiths.sh        # re-pull Bukhari + Muslim into hadiths.txt
+```
+
+Run it whenever; it overwrites `hadiths.txt`. To keep it fresh automatically,
+schedule it (cron/launchd) — ask and I'll set that up.
 
 ## Test it without enabling
 
 ```bash
-# render once
-echo '{}' | ./statusline.sh
-
-# watch it animate + rotate
-for i in $(seq 1 60); do echo '{}' | ./statusline.sh; sleep 0.2; done
+echo '{}' | ./statusline.sh                                  # render once
+for i in $(seq 1 20); do echo '{}' | ./statusline.sh; sleep 0.2; done   # watch spinner
 ```
 
 ## Customize
 
-- **Ads:** edit `ads.txt` — one ad per line, `#` for comments.
-- **Rotation speed:** change `FRAMES_PER_AD` in `statusline.sh` (higher = each
-  ad lingers longer).
-- **Spinner style:** edit the `frames=` line (e.g. `'| / - \'`).
-
-## Going real (what's deliberately NOT here)
-
-The hard 95% of something like kickbacks.ai is the backend, not this script:
-an ad network (advertisers + inventory + an ad-serving endpoint), impression/
-click tracking with anti-fraud, billing, and a payout pipeline. This project is
-only the client-side rendering surface, with static local ads standing in for
-all of that.
+- **Length filter:** `MINLEN` / `MAXLEN` in `refresh-hadiths.sh` (shorter max =
+  safer fit on narrow terminals).
+- **Collections:** add more `fetch <slug> <label>` lines in `refresh-hadiths.sh`
+  (slugs from the API's `editions.json`). Keep them authentic.
+- **Rotation speed:** `ROTATE_SECONDS` in `statusline.sh`.
+- **Spinner style:** the `frames=` line in `statusline.sh`.

@@ -1,22 +1,21 @@
 #!/usr/bin/env bash
-# spinner-ads — a mock "sponsored spinner" status line for Claude Code.
+# spinner-ads — an animated Claude Code status line that shows a spinner plus a
+# rotating authentic hadith.
 #
-# Claude Code calls this command repeatedly to render the status line at the
-# bottom of the terminal (passing session JSON on stdin, which we ignore for
-# the MVP). Each call advances a tick counter, so the spinner glyph animates
-# and the mock ad rotates. It refreshes often while Claude is working, so the
-# spinner naturally "spins" during activity.
+# Claude Code calls this command repeatedly to render the bottom status line
+# (passing session JSON on stdin, which we ignore). Each call advances a tick
+# counter so the spinner glyph animates while Claude works; the hadith rotates
+# on a wall-clock timer so each one stays on screen long enough to read.
 #
-# Wire it up by pointing settings.json -> statusLine.command at this file.
-# See README.md.
+# It never touches the network — it only reads hadiths.txt, which
+# refresh-hadiths.sh populates from the hadith API.
 
 set -euo pipefail
 
-# --- locate ourselves so we can find ads.txt regardless of cwd -------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
-ADS_FILE="$SCRIPT_DIR/ads.txt"
+DATA_FILE="$SCRIPT_DIR/hadiths.txt"
 
-# --- per-render tick counter (drives spinner frame + ad rotation) ----------
+# --- per-render tick counter (drives the spinner animation) ----------------
 STATE_DIR="$HOME/.spinner-ads"
 TICK_FILE="$STATE_DIR/tick"
 mkdir -p "$STATE_DIR"
@@ -35,22 +34,23 @@ read -ra FRAMES <<< "$frames"
 num_frames=${#FRAMES[@]}
 frame="${FRAMES[$((tick % num_frames))]}"
 
-# --- load mock ads (skip blanks + # comments) ------------------------------
-ADS=()
+# --- load hadiths (skip blanks + # comments) -------------------------------
+ITEMS=()
 while IFS= read -r line; do
-  ADS+=("$line")
-done < <(grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#' "$ADS_FILE" 2>/dev/null)
-num_ads=${#ADS[@]}
+  ITEMS+=("$line")
+done < <(grep -v -e '^[[:space:]]*$' -e '^[[:space:]]*#' "$DATA_FILE" 2>/dev/null)
+num_items=${#ITEMS[@]}
 
-if [ "$num_ads" -eq 0 ]; then
-  printf '%s  (no ads loaded — check %s)\n' "$frame" "$ADS_FILE"
+if [ "$num_items" -eq 0 ]; then
+  printf '%s  (no hadiths yet — run %s/refresh-hadiths.sh)\n' "$frame" "$SCRIPT_DIR"
   exit 0
 fi
 
-# rotate to the next ad every FRAMES_PER_AD renders
-FRAMES_PER_AD=20
-ad_index=$(((tick / FRAMES_PER_AD) % num_ads))
-ad="${ADS[$ad_index]}"
+# --- rotate to a new hadith every ROTATE_SECONDS of wall-clock time --------
+ROTATE_SECONDS=30
+now="$(date +%s)"
+item_index=$(((now / ROTATE_SECONDS) % num_items))
+item="${ITEMS[$item_index]}"
 
-# --- final status line -----------------------------------------------------
-printf '%s  %s  · sponsored\n' "$frame" "$ad"
+# --- final status line: spinner + hadith -----------------------------------
+printf '%s  %s\n' "$frame" "$item"
