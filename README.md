@@ -47,6 +47,31 @@ Then start (or restart) Claude Code. `install.sh` will:
 
 It's safe to re-run (e.g. after moving the folder).
 
+### One-line install (curl) — no `git clone` or Homebrew needed
+
+The installer lives in this repo, so you can **read it before running it** — which
+is the recommended way:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kenanbalija/claude-islamic-statuses/main/bootstrap.sh -o bootstrap.sh
+less bootstrap.sh        # inspect exactly what it will do
+bash bootstrap.sh
+```
+
+Or, if you already trust the source, the convenient form:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kenanbalija/claude-islamic-statuses/main/bootstrap.sh | bash
+```
+
+This clones the repo to `~/.local/share/claude-islamic-statuses` (override with
+`CLAUDE_ISLAMIC_STATUSES_DIR`), runs `install.sh`, and falls back to a tarball
+download if you don't have `git`. Re-run it any time to update.
+
+> Piping a script straight into your shell runs code you haven't read. That's
+> fine when you trust the source and it's auditable (this one is — it's right
+> here), but the inspect-first form above is the safer habit in general.
+
 ### Manual install
 
 If you'd rather not run the script, add this to `~/.claude/settings.json`
@@ -118,7 +143,9 @@ All knobs live at the top of the two scripts:
 ```
 
 Removes the `statusLine` from your settings (only if it points at this repo) and
-leaves everything else intact. Then delete the folder.
+leaves everything else intact. Then delete the folder. If you installed via the
+curl one-liner, the folder is `~/.local/share/claude-islamic-statuses`, so run
+`~/.local/share/claude-islamic-statuses/uninstall.sh`.
 
 ## Credits
 
