@@ -51,7 +51,16 @@ for path in sorted(glob.glob(os.path.join(tmp, "*.json"))):
         text = re.sub(r"\s+", " ", (h.get("text") or "")).strip()
         if not (minlen <= len(text) <= maxlen):
             continue
-        key = text.lower()
+        # Skip source-abbreviated stubs / cross-references — these read as "cut"
+        # (the elision is in the original data, not our truncation).
+        low = text.lower()
+        if ".." in text or "…" in text:
+            continue
+        if ("(see" in low or "(above)" in low or "(the above" in low
+                or "related in the chapter" in low or "(this narration" in low
+                or "(for this narration" in low):
+            continue
+        key = low
         if key in seen:
             continue
         seen.add(key)
