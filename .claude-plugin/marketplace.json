@@ -1,0 +1,20 @@
+{
+  "name": "kenanbalija",
+  "description": "Kenan Balija's Claude Code plugins",
+  "owner": {
+    "name": "Kenan Balija",
+    "email": "kenanbalija.dev@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "islamic-statuses",
+      "source": "./",
+      "description": "Animated status line: a spinner while Claude works, with rotating authentic hadiths (Sahih al-Bukhari & Muslim).",
+      "version": "1.0.0",
+      "author": { "name": "Kenan Balija" },
+      "homepage": "https://github.com/kenanbalija/claude-islamic-statuses",
+      "license": "MIT",
+      "keywords": ["hadith", "islamic", "statusline", "claude-code"]
+    }
+  ]
+}

@@ -72,6 +72,28 @@ download if you don't have `git`. Re-run it any time to update.
 > fine when you trust the source and it's auditable (this one is — it's right
 > here), but the inspect-first form above is the safer habit in general.
 
+### Install as a Claude Code plugin
+
+If you use Claude Code's plugin system, install it from inside Claude Code — no
+manual setup:
+
+```text
+/plugin marketplace add kenanbalija/claude-islamic-statuses
+/plugin install islamic-statuses@kenanbalija
+```
+
+The plugin uses a `SessionStart` hook to point your `statusLine` at the installed
+copy automatically (idempotent — it only writes `settings.json` when the path
+changes). Start a **new** Claude Code session for the status line to appear.
+
+> **Heads up (upstream limitation):** Claude Code plugins can't yet own the
+> primary `statusLine` directly
+> ([#64074](https://github.com/anthropics/claude-code/issues/64074)) — that's why
+> the `SessionStart` hook is used. One consequence: `/plugin uninstall
+> islamic-statuses` leaves the `statusLine` entry behind in `settings.json`
+> (pointing at a removed folder). After uninstalling, remove that `statusLine`
+> block manually or run this repo's `./uninstall.sh`.
+
 ### Manual install
 
 If you'd rather not run the script, add this to `~/.claude/settings.json`
