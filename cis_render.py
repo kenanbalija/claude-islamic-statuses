@@ -74,7 +74,7 @@ def _envint(name, default):
         return default
 
 DWELL = _envint("CIS_DWELL", 55)   # seconds each hadith is shown
-CPS   = _envint("CIS_CPS", 8)      # marquee scroll speed (characters per second)
+CPS   = _envint("CIS_CPS", 16)     # marquee scroll speed (characters per second)
 GAP   = "      •      "
 
 # CC_NOW overrides the clock (test hook only). Float for sub-second smoothness

@@ -168,10 +168,11 @@ All knobs live at the top of the two scripts:
 - **Collections** — add `fetch <slug> <label>` lines in `refresh-hadiths.sh`
   (slugs come from the API's `editions.json`). Keep them authentic.
 - **Scroll speed & rotation** — set env vars `CIS_CPS` (scroll chars/second,
-  default 8) and `CIS_DWELL` (seconds per hadith, default 55). Put them in your
+  default 16) and `CIS_DWELL` (seconds per hadith, default 55). Put them in your
   shell profile or in settings.json `env`, e.g. `"env": { "CIS_CPS": "12" }`.
-  Defaults live in `cis_render.py`. `refreshInterval` (settings.json) sets the
-  idle re-render rate (min 1s), which caps how often it steps when you're idle.
+  Defaults live in `cis_render.py`. Note: motion is only as smooth as Claude
+  Code re-renders the status line — smooth while Claude works, but capped at one
+  step/second when idle (`refreshInterval` minimum is 1s).
 - **Spinner style** — the `FRAMES` string in `statusline.sh`.
 
 ## Uninstall
