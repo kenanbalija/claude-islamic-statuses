@@ -167,8 +167,11 @@ All knobs live at the top of the two scripts:
   scholarly classification).
 - **Collections** — add `fetch <slug> <label>` lines in `refresh-hadiths.sh`
   (slugs come from the API's `editions.json`). Keep them authentic.
-- **Rotation & scroll** — `DWELL` (seconds per hadith) and `CPS` (scroll speed,
-  characters/second) in `statusline.sh`; `refreshInterval` in `settings.json`.
+- **Scroll speed & rotation** — set env vars `CIS_CPS` (scroll chars/second,
+  default 8) and `CIS_DWELL` (seconds per hadith, default 55). Put them in your
+  shell profile or in settings.json `env`, e.g. `"env": { "CIS_CPS": "12" }`.
+  Defaults live in `cis_render.py`. `refreshInterval` (settings.json) sets the
+  idle re-render rate (min 1s), which caps how often it steps when you're idle.
 - **Spinner style** — the `FRAMES` string in `statusline.sh`.
 
 ## Uninstall

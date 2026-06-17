@@ -65,14 +65,22 @@ if not cols:
 if cols < 20:
     cols = 80
 
-# --- tunables ---
-DWELL = 55     # seconds each hadith is shown
-CPS   = 4      # marquee scroll speed (characters per second)
+# --- tunables (override via env vars CIS_CPS / CIS_DWELL) ---
+def _envint(name, default):
+    try:
+        v = int(os.environ.get(name, ""))
+        return v if v > 0 else default
+    except Exception:
+        return default
+
+DWELL = _envint("CIS_DWELL", 55)   # seconds each hadith is shown
+CPS   = _envint("CIS_CPS", 8)      # marquee scroll speed (characters per second)
 GAP   = "      •      "
 
-# CC_NOW overrides the clock (test hook only).
-now = int(os.environ.get("CC_NOW") or time.time())
-idx = (now // DWELL) % len(items)
+# CC_NOW overrides the clock (test hook only). Float for sub-second smoothness
+# when Claude Code re-renders faster than once a second.
+now = float(os.environ.get("CC_NOW") or time.time())
+idx = int(now // DWELL) % len(items)
 text = items[idx]
 
 avail = max(10, cols - 3)   # columns left after the "X  " spinner prefix
@@ -80,5 +88,5 @@ if len(text) <= avail:
     print(f"{spin}  {text}")
 else:
     src = text + GAP
-    off = ((now % DWELL) * CPS) % len(src)
+    off = int((now % DWELL) * CPS) % len(src)
     print(f"{spin}  {(src + src)[off:off + avail]}")
