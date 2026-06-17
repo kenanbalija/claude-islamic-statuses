@@ -30,7 +30,7 @@ fetch eng-bukhari "Bukhari"
 fetch eng-muslim  "Muslim"
 
 # Extract, clean, length-filter, de-dupe — write hadiths.txt.
-MINLEN=40 MAXLEN=140 python3 - "$TMP" "$OUT" <<'PY'
+MINLEN=40 MAXLEN=200 python3 - "$TMP" "$OUT" <<'PY'
 import json, os, re, sys, glob
 tmp, out = sys.argv[1], sys.argv[2]
 minlen, maxlen = int(os.environ["MINLEN"]), int(os.environ["MAXLEN"])

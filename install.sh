@@ -42,7 +42,7 @@ if os.path.exists(path):
                  f"Refusing to touch it. Add this statusLine yourself:\n"
                  f'  "statusLine": {{ "type": "command", "command": "{cmd}" }}')
 
-data["statusLine"] = {"type": "command", "command": cmd}
+data["statusLine"] = {"type": "command", "command": cmd, "refreshInterval": 1}
 with open(path, "w") as f:
     json.dump(data, f, indent=2)
     f.write("\n")

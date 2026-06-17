@@ -8,9 +8,14 @@ hadith** shown along the bottom of your terminal.
 ⠹  Narrated Abu Huraira: Allah's Messenger (ﷺ) said, "The strong is not the one who overcomes people by his strength..."  — Bukhari 6114
 ```
 
-The spinner advances as Claude generates; the hadith changes every 30 seconds so
-each one stays long enough to read. It runs entirely locally — no API key, no
+The spinner advances as Claude generates; the hadith rotates periodically, and
+any hadith longer than your terminal is wide **scrolls** right-to-left so you can
+read the whole thing on one line. It runs entirely locally — no API key, no
 account, no network calls during rendering.
+
+The hadiths are also **curated to uplifting themes** (mercy, kindness, charity,
+sincerity, knowledge, patience, gratitude, good character, dhikr) and filtered to
+avoid sensitive or easily-misread-out-of-context narrations.
 
 ## Features
 
@@ -127,8 +132,12 @@ and displaying the output, re-running it on activity. Two scripts:
 
 | Script | Role |
 |--------|------|
-| `statusline.sh` | The command Claude Code calls. Advances a tick counter (`~/.claude-islamic-statuses/tick`) for the spinner frame, picks a hadith by a 30-second wall-clock timer, prints one line. Reads only the local cache. |
-| `refresh-hadiths.sh` | Downloads the collections from the hadith API, keeps short one-line-friendly hadiths, de-dupes, and writes `hadiths.txt`. |
+| `statusline.sh` | The command Claude Code calls. Advances a tick counter (`~/.claude-islamic-statuses/tick`) for the spinner frame, picks a hadith on a wall-clock timer, and prints one line — scrolling it as a marquee if it's wider than the terminal. Renders via `python3` for correct multibyte (ﷺ / em-dash) slicing. Reads only the local cache. |
+| `refresh-hadiths.sh` | Downloads the collections from the hadith API, drops abbreviated/cross-reference stubs, curates to uplifting themes, de-dupes, and writes `hadiths.txt`. |
+
+To make long hadiths scroll even while Claude is idle, the status line is
+configured with `"refreshInterval": 1` (re-render once a second). Remove it to
+scroll only while Claude is working.
 
 Because the status line never makes network calls, it stays instant and works
 offline once the cache exists.
@@ -151,12 +160,16 @@ Each entry keeps its `— Collection Number` reference for verification.
 
 All knobs live at the top of the two scripts:
 
-- **Hadith length** — `MINLEN` / `MAXLEN` in `refresh-hadiths.sh` (lower max =
-  safer fit on narrow terminals).
+- **Hadith length** — `MINLEN` / `MAXLEN` in `refresh-hadiths.sh`. With marquee
+  scrolling, a higher `MAXLEN` keeps fuller hadiths (they just scroll).
+- **Themes** — the `UPLIFTING` / `SENSITIVE` keyword lists at the top of
+  `refresh-hadiths.sh` decide what's kept. Tune them to taste (heuristic, not
+  scholarly classification).
 - **Collections** — add `fetch <slug> <label>` lines in `refresh-hadiths.sh`
   (slugs come from the API's `editions.json`). Keep them authentic.
-- **Rotation speed** — `ROTATE_SECONDS` in `statusline.sh`.
-- **Spinner style** — the `frames=` line in `statusline.sh`.
+- **Rotation & scroll** — `DWELL` (seconds per hadith) and `CPS` (scroll speed,
+  characters/second) in `statusline.sh`; `refreshInterval` in `settings.json`.
+- **Spinner style** — the `FRAMES` string in `statusline.sh`.
 
 ## Uninstall
 

@@ -42,7 +42,7 @@ if os.path.exists(path):
     except Exception:
         raise SystemExit(0)  # don't touch an unparseable settings file
 
-desired = {"type": "command", "command": cmd}
+desired = {"type": "command", "command": cmd, "refreshInterval": 1}
 if data.get("statusLine") == desired:
     raise SystemExit(0)  # already correct — write nothing
 
