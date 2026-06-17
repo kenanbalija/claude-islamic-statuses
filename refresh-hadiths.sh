@@ -35,6 +35,48 @@ import json, os, re, sys, glob
 tmp, out = sys.argv[1], sys.argv[2]
 minlen, maxlen = int(os.environ["MINLEN"]), int(os.environ["MAXLEN"])
 
+# --- uplifting-themes curation (heuristic keyword pass; tune to taste) -------
+# Keep a hadith only if it hits an UPLIFTING theme AND avoids every SENSITIVE
+# one. SENSITIVE wins: a charity hadith that also mentions Hellfire is dropped.
+# This is a keyword heuristic, not scholarly classification — edit freely.
+UPLIFTING = re.compile(r"\b(" + "|".join([
+    r"merc\w*", r"compassion\w*", r"kindness", r"kind-?hearted", r"kind to", r"gentle\w*",
+    r"forgiv\w*", r"pardon\w*",
+    r"charit\w*", r"alms\w*", r"generou\w*", r"generosity", r"feed the (poor|hungry|needy)",
+    r"love[sd]?", r"loving", r"affection",
+    r"patien\w*", r"gratitude", r"grateful", r"thankful",
+    r"sincer\w*", r"intention[s]?",
+    r"knowledge", r"wisdom",
+    r"neighbou?r[s]?", r"parent[s]?", r"dutiful",
+    r"kinship", r"orphan[s]?", r"guest[s]?",
+    r"truthful", r"honest\w*", r"trustworth\w*", r"promise[sd]?",
+    r"humble", r"humility", r"modest\w*",
+    r"smil\w*", r"cheerful", r"righteous\w*", r"virtue",
+    r"good (word|deed|deeds|manners|character|conduct)", r"best of you",
+    r"remember\w* allah", r"remembrance of allah", r"glorif\w*", r"prais\w* (allah|his lord|the lord)",
+    r"supplicat\w*", r"repent\w*",
+    r"help[s]?", r"ease[sd]?", r"reliev\w*", r"relief",
+    r"self-control", r"controls? himself", r"restrain\w*",
+    r"trust in allah", r"rely on allah", r"reliance",
+]) + r")\b", re.I)
+SENSITIVE = re.compile(r"\b(" + "|".join([
+    r"hell\w*", r"fire", r"blaz\w*", r"torment\w*", r"tortur\w*",
+    r"punish\w*", r"chastis\w*", r"grave[s]?", r"grievous",
+    r"kill\w*", r"murder\w*", r"slay", r"slain", r"blood\w*",
+    r"stone[sd]?", r"stoning", r"lash\w*", r"whip\w*", r"flog\w*", r"amputat\w*",
+    r"adulter\w*", r"fornicat\w*", r"zina", r"intercourse", r"menstru\w*",
+    r"semen", r"urin\w*", r"f[ae]ces", r"impur\w*", r"najis",
+    r"women would", r"woman is", r"deficient", r"minorit\w*", r"inmates",
+    r"dajjal", r"antichrist", r"satan", r"devil[s]?", r"iblis",
+    r"sorcer\w*", r"witch\w*", r"magic",
+    r"war[s]?", r"battle[s]?", r"fight\w*", r"fought", r"army", r"armies", r"enem\w*",
+    r"sword[s]?", r"spear[s]?", r"captive[s]?", r"booty", r"spoils",
+    r"slave-?girl[s]?", r"slaver\w*",
+    r"wine", r"alcohol\w*", r"intoxicant[s]?", r"khamr", r"drunk\w*",
+    r"divorc\w*", r"curse[sd]?", r"cursing", r"wrath",
+    r"hypocri\w*", r"disbelie\w*", r"apostat\w*", r"kufr", r"infidel[s]?", r"idol\w*",
+]) + r")\b", re.I)
+
 labels = {}
 with open(os.path.join(tmp, "manifest")) as f:
     for line in f:
@@ -59,6 +101,17 @@ for path in sorted(glob.glob(os.path.join(tmp, "*.json"))):
         if ("(see" in low or "(above)" in low or "(the above" in low
                 or "related in the chapter" in low or "(this narration" in low
                 or "(for this narration" in low):
+            continue
+        # Drop isnad-only / "same as another chain" meta entries (not content).
+        if any(m in low for m in (
+                "rest of the hadith", "another chain", "chain of transmitters",
+                "same chain", "the same as", "with the same meaning",
+                "has been transmitted", "as narrated above", "similar hadith",
+                "with a slight variation", "like the one narrated",
+                "the rest of the", "transmitted on the authority")):
+            continue
+        # Curate to uplifting themes (see UPLIFTING / SENSITIVE above).
+        if SENSITIVE.search(low) or not UPLIFTING.search(low):
             continue
         key = low
         if key in seen:
