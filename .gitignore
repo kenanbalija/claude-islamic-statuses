@@ -1,3 +1,4 @@
-# local render state
-.spinner-ads/
+# local render state (lives in $HOME, listed here just in case)
+.claude-islamic-statuses/
 tick
+*.bak

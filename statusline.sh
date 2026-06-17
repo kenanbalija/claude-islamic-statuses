@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# spinner-ads — an animated Claude Code status line that shows a spinner plus a
-# rotating authentic hadith.
+# claude-islamic-statuses — an animated Claude Code status line that shows a
+# spinner plus a rotating authentic hadith.
 #
 # Claude Code calls this command repeatedly to render the bottom status line
 # (passing session JSON on stdin, which we ignore). Each call advances a tick
@@ -16,7 +16,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 DATA_FILE="$SCRIPT_DIR/hadiths.txt"
 
 # --- per-render tick counter (drives the spinner animation) ----------------
-STATE_DIR="$HOME/.spinner-ads"
+STATE_DIR="$HOME/.claude-islamic-statuses"
 TICK_FILE="$STATE_DIR/tick"
 mkdir -p "$STATE_DIR"
 
