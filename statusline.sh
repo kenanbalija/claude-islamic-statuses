@@ -21,15 +21,12 @@ STATE_DIR="$HOME/.spinner-ads"
 TICK_FILE="$STATE_DIR/tick"
 mkdir -p "$STATE_DIR"
 
-tick=0
-if [ -f "$TICK_FILE" ]; then
-  read -r tick < "$TICK_FILE" || tick=0
-fi
-# guard against an empty/corrupted state file
+tick="$(cat "$TICK_FILE" 2>/dev/null || true)"
+# guard against a missing/empty/corrupted state file
 case "$tick" in
   ''|*[!0-9]*) tick=0 ;;
 esac
-printf '%s' "$((tick + 1))" > "$TICK_FILE"
+printf '%s\n' "$((tick + 1))" > "$TICK_FILE"
 
 # --- spinner frame ---------------------------------------------------------
 # braille spinner; split on whitespace into an array (works on macOS bash 3.2)
