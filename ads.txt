@@ -1,0 +1,12 @@
+# spinner-ads mock inventory — one ad per line.
+# Lines that are blank or start with # are ignored.
+# These are fake (.example domains). Swap in your own copy anytime.
+
+☕  CodeFuel — single-origin coffee for people who ship at 2am     → codefuel.example
+🚀  ShipFast — git push, we handle the rest. First deploy free     → shipfast.example
+🧠  BrainBytes — one algorithm a day, straight to your inbox       → brainbytes.example
+🦆  RubberDuck Pro — it finally talks back                         → rubberduck.example
+🌙  NightOwl Keys — silent switches for loud ideas                 → nightowl.example
+🔋  AFK Energy — caffeine-free focus gummies                       → afk.example
+📦  DepGuard — see what you're installing before you do            → depguard.example
+🛟  PagerCalm — on-call that doesn't ruin your weekend             → pagercalm.example
