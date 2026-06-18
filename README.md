@@ -5,13 +5,14 @@ spinner that animates while Claude is working, with a rotating **authentic
 hadith** shown along the bottom of your terminal.
 
 ```
-⠹  Narrated Abu Huraira: Allah's Messenger (ﷺ) said, "The strong is not the one who overcomes people by his strength..."  — Bukhari 6114
+⠹  Narrated Anas: The Prophet (ﷺ) said, "None of you will have faith
+   till he loves for his brother what he likes for himself"  — Bukhari 13
 ```
 
-The spinner advances as Claude generates; the hadith rotates periodically, and
-any hadith longer than your terminal is wide **scrolls** right-to-left so you can
-read the whole thing on one line. It runs entirely locally — no API key, no
-account, no network calls during rendering.
+The spinner advances as Claude generates; the hadith rotates periodically and is
+shown **wrapped across a few lines** so you can read the whole thing at once.
+Prefer a single scrolling line instead? Set `CIS_MODE=scroll`. It runs entirely
+locally — no API key, no account, no network calls during rendering.
 
 The hadiths are also **curated to uplifting themes** (mercy, kindness, charity,
 sincerity, knowledge, patience, gratitude, good character, dhikr) and filtered to
@@ -132,12 +133,12 @@ and displaying the output, re-running it on activity. Two scripts:
 
 | Script | Role |
 |--------|------|
-| `statusline.sh` | The command Claude Code calls. Advances a tick counter (`~/.claude-islamic-statuses/tick`) for the spinner frame, picks a hadith on a wall-clock timer, and prints one line — scrolling it as a marquee if it's wider than the terminal. Renders via `python3` for correct multibyte (ﷺ / em-dash) slicing. Reads only the local cache. |
+| `statusline.sh` + `cis_render.py` | The command Claude Code calls. `statusline.sh` locates and execs the python renderer, which advances the spinner, picks a hadith on a wall-clock timer, and prints it **word-wrapped across a few rows** (default) — or as a single-line scrolling marquee in `CIS_MODE=scroll`. Reads `$COLUMNS` for width; renders in python for correct multibyte (ﷺ / em-dash) handling. Reads only the local cache. |
 | `refresh-hadiths.sh` | Downloads the collections from the hadith API, drops abbreviated/cross-reference stubs, curates to uplifting themes, de-dupes, and writes `hadiths.txt`. |
 
-To make long hadiths scroll even while Claude is idle, the status line is
-configured with `"refreshInterval": 1` (re-render once a second). Remove it to
-scroll only while Claude is working.
+The status line is configured with `"refreshInterval": 1` so the spinner keeps
+animating (and the marquee keeps scrolling) while Claude is idle. Remove it to
+update only while Claude is working.
 
 Because the status line never makes network calls, it stays instant and works
 offline once the cache exists.
@@ -160,20 +161,25 @@ Each entry keeps its `— Collection Number` reference for verification.
 
 All knobs live at the top of the two scripts:
 
-- **Hadith length** — `MINLEN` / `MAXLEN` in `refresh-hadiths.sh`. With marquee
-  scrolling, a higher `MAXLEN` keeps fuller hadiths (they just scroll).
+Behaviour is set with env vars (shell profile or settings.json `env`, e.g.
+`"env": { "CIS_MODE": "scroll" }`); defaults live in `cis_render.py`:
+
+- **Display mode** — `CIS_MODE=wrap` (default: whole hadith across a few rows) or
+  `CIS_MODE=scroll` (single-line marquee).
+- **Rows / rotation** — `CIS_LINES` (max rows in wrap mode, default 4) and
+  `CIS_DWELL` (seconds per hadith, default 55).
+- **Scroll speed** (scroll mode only) — `CIS_CPS` (chars/second, default 16).
+  Idle motion is capped at one step per second (`refreshInterval` minimum is 1s).
+
+And in the data/script files:
+
+- **Hadith length** — `MINLEN` / `MAXLEN` in `refresh-hadiths.sh` (wrap mode
+  shows the whole thing, so a higher `MAXLEN` is fine).
 - **Themes** — the `UPLIFTING` / `SENSITIVE` keyword lists at the top of
-  `refresh-hadiths.sh` decide what's kept. Tune them to taste (heuristic, not
-  scholarly classification).
+  `refresh-hadiths.sh` decide what's kept (heuristic, not scholarly).
 - **Collections** — add `fetch <slug> <label>` lines in `refresh-hadiths.sh`
   (slugs come from the API's `editions.json`). Keep them authentic.
-- **Scroll speed & rotation** — set env vars `CIS_CPS` (scroll chars/second,
-  default 16) and `CIS_DWELL` (seconds per hadith, default 55). Put them in your
-  shell profile or in settings.json `env`, e.g. `"env": { "CIS_CPS": "12" }`.
-  Defaults live in `cis_render.py`. Note: motion is only as smooth as Claude
-  Code re-renders the status line — smooth while Claude works, but capped at one
-  step/second when idle (`refreshInterval` minimum is 1s).
-- **Spinner style** — the `FRAMES` string in `statusline.sh`.
+- **Spinner style** — the `FRAMES` string in `cis_render.py`.
 
 ## Uninstall
 

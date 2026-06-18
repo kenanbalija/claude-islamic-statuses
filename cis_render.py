@@ -1,11 +1,22 @@
 #!/usr/bin/env python3
 # claude-islamic-statuses renderer. Invoked by statusline.sh as:
 #   python3 cis_render.py <repo_dir>
-# Prints one status line: a spinner + a hadith that scrolls (marquee) when it's
-# wider than the terminal. Rendering in python keeps multibyte text (the ﷺ
-# glyph, em dash) measured/sliced by character. Reads the status-line JSON from
-# stdin NON-BLOCKINGLY (so it can never hang), only to learn the terminal width.
-import os, sys, time, json, select
+#
+# Default mode "wrap": prints the spinner + the WHOLE hadith, word-wrapped across
+# a few lines (each printed line is a separate status row).
+# Mode "scroll": single-line marquee that scrolls long hadiths (CIS_MODE=scroll).
+#
+# Width comes from $COLUMNS (Claude Code sets it, v2.1.153+), then the status-line
+# JSON on stdin (read non-blocking so it can never hang), then 80. Rendering in
+# python keeps multibyte text (the ﷺ glyph, em dash) measured by character.
+import os, sys, time, json, select, textwrap
+
+def _envint(name, default):
+    try:
+        v = int(os.environ.get(name, ""))
+        return v if v > 0 else default
+    except Exception:
+        return default
 
 script_dir = sys.argv[1] if len(sys.argv) > 1 else os.path.dirname(os.path.abspath(__file__))
 data_file = os.path.join(script_dir, "hadiths.txt")
@@ -38,55 +49,59 @@ if not items:
     print(f"{spin}  (no hadiths yet — run {script_dir}/refresh-hadiths.sh)")
     sys.exit(0)
 
-# --- terminal width: status-line JSON (read safely) -> COLUMNS -> 80 ---
-raw = ""
+# --- terminal width: $COLUMNS -> status-line JSON -> 80 ---
 try:
-    if select.select([0], [], [], 0.1)[0]:
-        raw = os.read(0, 65536).decode("utf-8", "ignore")
+    cols = int(os.environ.get("COLUMNS") or 0)
 except Exception:
-    pass
-cols = 0
-if raw:
+    cols = 0
+if not cols:
+    raw = ""
     try:
-        j = json.loads(raw)
-        for k in ("width", "cols", "columns"):
-            v = j.get(k)
-            if isinstance(v, int) and v > 0:
-                cols = v; break
-        if not cols and isinstance(j.get("terminal"), dict):
-            v = j["terminal"].get("width") or j["terminal"].get("cols")
-            if isinstance(v, int) and v > 0:
-                cols = v
+        if select.select([0], [], [], 0.1)[0]:
+            raw = os.read(0, 65536).decode("utf-8", "ignore")
     except Exception:
         pass
-if not cols:
-    try: cols = int(os.environ.get("COLUMNS") or 0)
-    except Exception: cols = 0
+    if raw:
+        try:
+            j = json.loads(raw)
+            for k in ("width", "cols", "columns"):
+                v = j.get(k)
+                if isinstance(v, int) and v > 0:
+                    cols = v; break
+            if not cols and isinstance(j.get("terminal"), dict):
+                v = j["terminal"].get("width") or j["terminal"].get("cols")
+                if isinstance(v, int) and v > 0:
+                    cols = v
+        except Exception:
+            pass
 if cols < 20:
     cols = 80
 
-# --- tunables (override via env vars CIS_CPS / CIS_DWELL) ---
-def _envint(name, default):
-    try:
-        v = int(os.environ.get(name, ""))
-        return v if v > 0 else default
-    except Exception:
-        return default
-
+# --- pick the current hadith ---
 DWELL = _envint("CIS_DWELL", 55)   # seconds each hadith is shown
-CPS   = _envint("CIS_CPS", 16)     # marquee scroll speed (characters per second)
-GAP   = "      •      "
+avail = max(10, cols - 3)          # columns after the "X  " spinner prefix
+now = float(os.environ.get("CC_NOW") or time.time())   # CC_NOW = test hook
+text = items[int(now // DWELL) % len(items)]
 
-# CC_NOW overrides the clock (test hook only). Float for sub-second smoothness
-# when Claude Code re-renders faster than once a second.
-now = float(os.environ.get("CC_NOW") or time.time())
-idx = int(now // DWELL) % len(items)
-text = items[idx]
+mode = os.environ.get("CIS_MODE", "wrap").strip().lower()
 
-avail = max(10, cols - 3)   # columns left after the "X  " spinner prefix
-if len(text) <= avail:
-    print(f"{spin}  {text}")
+if mode == "scroll":
+    # single-line marquee
+    CPS = _envint("CIS_CPS", 16)   # scroll speed (characters per second)
+    GAP = "      •      "
+    if len(text) <= avail:
+        print(f"{spin}  {text}")
+    else:
+        src = text + GAP
+        off = int((now % DWELL) * CPS) % len(src)
+        print(f"{spin}  {(src + src)[off:off + avail]}")
 else:
-    src = text + GAP
-    off = int((now % DWELL) * CPS) % len(src)
-    print(f"{spin}  {(src + src)[off:off + avail]}")
+    # wrap (default): the whole hadith across a few lines
+    maxlines = _envint("CIS_LINES", 4)
+    lines = textwrap.wrap(text, width=avail) or [""]
+    if len(lines) > maxlines:
+        lines = lines[:maxlines]
+        lines[-1] = lines[-1][:avail - 1].rstrip() + "…"
+    print(f"{spin}  {lines[0]}")
+    for ln in lines[1:]:
+        print(f"   {ln}")            # indent continuation lines under the text
