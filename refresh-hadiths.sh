@@ -91,6 +91,8 @@ for path in sorted(glob.glob(os.path.join(tmp, "*.json"))):
         data = json.load(f)
     for h in data.get("hadiths", []):
         text = re.sub(r"\s+", " ", (h.get("text") or "")).strip()
+        # The ﷺ ligature (U+FDFA) breaks in many terminal fonts — use ASCII.
+        text = text.replace("(ﷺ)", "(saw)").replace("ﷺ", "(saw)")
         if not (minlen <= len(text) <= maxlen):
             continue
         # Skip source-abbreviated stubs / cross-references — these read as "cut"

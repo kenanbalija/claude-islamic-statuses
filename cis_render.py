@@ -82,6 +82,7 @@ DWELL = _envint("CIS_DWELL", 55)   # seconds each hadith is shown
 avail = max(10, cols - 3)          # columns after the "X  " spinner prefix
 now = float(os.environ.get("CC_NOW") or time.time())   # CC_NOW = test hook
 text = items[int(now // DWELL) % len(items)]
+text = text.replace("(ﷺ)", "(saw)").replace("ﷺ", "(saw)")   # ASCII for broken-font terminals
 
 mode = os.environ.get("CIS_MODE", "wrap").strip().lower()
 
